@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-//import 'package:mercury/screens/add_help.dart';
-//import 'package:mercury/screens/homeScreen.dart';
-//import 'package:mercury/screens/signUp.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:small_jobs/signup.dart';
 
-//import '../services/authentication.dart';
+import 'homeScreen.dart';
+
 
 class LoginScreen extends StatefulWidget {
-  //LoginScreen(
-    //  {this.auth, this.loginCallback, this.logoutCallback, this.origin});
-
-  /*final BaseAuth auth;
-  final VoidCallback loginCallback;
-  final VoidCallback logoutCallback;
-  final String origin;*/
 
   @override
   _LoginScreenState createState() => new _LoginScreenState();
@@ -27,6 +24,51 @@ class _LoginScreenState extends State<LoginScreen> {
   String _errorMessage;
   int _textUndeline = 0xFFF9F8FC;
 
+  String firstname;
+  String lastname;
+  String email;
+  String age;
+  String phone;
+  String description;
+  List<String> skills = [];
+
+
+  void login() async {
+    try {
+      var res = await http.post(Uri.encodeFull('https://small-jobs-rest.herokuapp.com/users/login'), headers: {"Accept": "application/json"}, body: jsonEncode({"email": emailController.text, "password": passController.text}));
+      setState(() {
+        var resBody = json.decode(res.body);
+        debugPrint(resBody.toString());
+        firstname = resBody["first_name"];
+        lastname = resBody["last_name"];
+        email = resBody["email"];
+        /*age = resBody["age"];
+        phone = resBody["phone_number"];
+        description = resBody["description"];*/
+        //skills = resBody["skills"];*/
+
+      });
+      Navigator.of(context).push(
+          new MaterialPageRoute(builder: (
+              BuildContext context) =>
+          new HomeScreen(
+            first_name: this.firstname,
+            last_name: this.lastname,
+            email: this.email,
+            /*age: this.age,
+            phone: this.phone,
+            description: this.description,*/
+            //skills: skills,
+          )
+          )
+      );
+    } catch(error) {
+      debugPrint("LOGIN FAILED\n");
+    }
+
+  }
+
+
   // Check if form is valid before perform login or signup
   bool validateForm() {
     if (emailController.text != null && passController.text != null) {
@@ -37,50 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return false;
   }
 
-  // Perform login or signup
-  /*void validateAndSubmit() async {
-    setState(() {
-      _errorMessage = "";
-      _isLoading = true;
-    });
-    String userId = "";
-    try {
-      userId = await widget.auth.signIn(emailController.text, passController.text);
-      print('Signed in: $userId');
-      setState(() {
-        _isLoading = false;
-      });
+  void validateAndSubmit() {
 
-      if (userId.length > 0 && userId != null) {
-        widget.loginCallback();
-        if (widget.origin.compareTo("preciso_de_ajuda") == 0) {
-          Navigator.of(context)
-              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
-            return new AddHelpScreen(
-              auth: widget.auth,
-              loginCallback: widget.loginCallback,
-              logoutCallback: widget.logoutCallback,
-            );
-          }));
-        } else if (widget.origin.compareTo("quero_ajudar") == 0) {
-          Navigator.of(context)
-              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
-            return new HomeScreen(
-              auth: widget.auth,
-              loginCallback: widget.loginCallback,
-              logoutCallback: widget.logoutCallback,
-            );
-          }));
-        }
-      }
-    } catch (e) {
-      print('Error: $e');
-      _errorMessage = e.message;
-      setState(() {
-        _isLoading = true;
-      });
-    }
-  }*/
+  }
 
   @override
   void dispose() {
@@ -224,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 FloatingActionButton(
                                   onPressed: () {
                                     if (validateForm()) {
-                                      //validateAndSubmit();
+                                      login();
                                     } else {
                                       setState(() {
                                         _textUndeline =
@@ -247,15 +248,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   children: <Widget>[
                                     GestureDetector(
                                       onTap: () {
-                                        /*Navigator.of(context).push(
+                                        Navigator.of(context).push(
                                             MaterialPageRoute<Null>(builder:
                                                 (BuildContext context) {
-                                              return new SignUpScreen(
-                                                auth: widget.auth,
-                                                loginCallback: widget
-                                                    .loginCallback,
-                                              );
-                                            }));*/
+                                              return new SignUpScreen();
+                                            }));
                                       },
                                       child: Text(
                                         'Sign Up',
