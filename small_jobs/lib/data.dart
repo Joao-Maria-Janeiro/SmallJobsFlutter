@@ -1,6 +1,6 @@
 var images = [
-  "assets/image_01.png",
-  "assets/image_02.png",
+  "assets/quadro.jpg",
+  "assets/relva.jpg",
   "assets/image_03.png",
 ];
 

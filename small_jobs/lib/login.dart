@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _errorMessage;
   int _textUndeline = 0xFFF9F8FC;
 
+  String token;
   String firstname;
   String lastname;
   String email;
@@ -39,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         var resBody = json.decode(res.body);
         debugPrint(resBody.toString());
+        token = resBody["token"];
         firstname = resBody["first_name"];
         lastname = resBody["last_name"];
         email = resBody["email"];
@@ -52,6 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
           new MaterialPageRoute(builder: (
               BuildContext context) =>
           new HomeScreen(
+            token: this.token,
             first_name: this.firstname,
             last_name: this.lastname,
             email: this.email,

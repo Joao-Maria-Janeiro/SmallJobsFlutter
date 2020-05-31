@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:small_jobs/job_description.dart';
+import 'package:small_jobs/my_jobs.dart';
+import 'package:small_jobs/add_job.dart';
+import 'package:small_jobs/history.dart';
 import 'data.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
 
+  final String token;
   final String first_name;
   final String last_name;
   final String email;
@@ -12,7 +19,7 @@ class HomeScreen extends StatefulWidget {
   final String description;
   List<String> skills = [];
 
-  HomeScreen({Key key, this.first_name, this.last_name, this.email, this.age, this.phone, this.description}) : super(key: key);
+  HomeScreen({Key key, this.token, this.first_name, this.last_name, this.email, this.age, this.phone, this.description}) : super(key: key);
 
   @override
   _HomeScreenState createState() => new _HomeScreenState();
@@ -20,10 +27,34 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>{
 
+  List data;
+
+
+  Future<String> getData() async {
+    var res = await http.get(
+        Uri.encodeFull("https://small-jobs-rest.herokuapp.com/jobs/all"),
+            headers: {"Accept": "application/json"});
+        setState(() {
+      var resBody = json.decode(res.body);
+      data = resBody;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: new AppBar(title: new Text("Small jobs"),
+        appBar: new AppBar(title: new Text(""),
             backgroundColor: Color(0xff00555a)
         ),
         drawer: new Drawer(
@@ -43,7 +74,28 @@ class _HomeScreenState extends State<HomeScreen>{
                   title: new Text("My jobs"),
                   trailing: new Icon(Icons.history),
                   onTap: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                        new MaterialPageRoute(builder: (
+                            BuildContext context) =>
+                        new MyJobsScreen(
+                          token: widget.token,
+                        )
+                        )
+                    );
+                  }
+              ),
+              new ListTile(
+                  title: new Text("History"),
+                  trailing: new Icon(Icons.history),
+                  onTap: () {
+                    Navigator.of(context).push(
+                        new MaterialPageRoute(builder: (
+                            BuildContext context) =>
+                        new HistoryScreen(
+                          token: widget.token,
+                        )
+                        )
+                    );
                   }
               ),
               new ListTile(
@@ -69,25 +121,50 @@ class _HomeScreenState extends State<HomeScreen>{
             return Stack(
               fit: StackFit.expand,
               children: <Widget>[
+                  Positioned(
+                    top: 20.0,
+                    left: 20.0,
+                    right: 20.0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text("SmallJobs",
+                            style: TextStyle(fontSize: 28.0, letterSpacing: 1.5, color: Colors.black, fontFamily: "Montserrat-Bold")),
+                        Text("Choose a Job to Work",
+                            style: TextStyle(fontSize: 16.0, letterSpacing: 1.5, color: Colors.black, fontFamily: "Montserrat-Medium"))
+                      ],
+                    ),
+                  ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
-                    height: height * 0.9,
+                    height: height * 0.85,
                     child: ListView.builder(
-                      itemCount: images.length,
+                      itemCount: data.length,
                       scrollDirection: Axis.vertical,
                       physics: BouncingScrollPhysics(),
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: EdgeInsets.all(20.0),
                           child: InkWell(
-                           /* onTap: () => Navigator.of(context).push(MaterialPageRoute<Null>(
+                            onTap: () => Navigator.of(context).push(MaterialPageRoute<Null>(
                                 builder: (BuildContext context) {
-                                  return new HelpScreen(
-                                    auth: widget.auth,
-                                    loginCallback: widget.loginCallback,
+                                  return new JobDescriptionScreen(
+                                    token: widget.token,
+                                    whereFrom: 1,
+                                    id: data[index]["id"],
+                                    title: data[index]["title"],
+                                    description: data[index]["description"],
+                                    endDate: data[index]["end_date"],
+                                    endTime: data[index]["end_time"],
+                                    location: data[index]["location"],
+                                    payment: data[index]["payment"],
+                                    phone: data[index]["phone_number"],
+                                    publisher: data[index]["employer"],
+                                    startDate: data[index]["start_date"],
+                                    startTime: data[index]["start_time"],
                                   );
-                                })),*/
+                                })),
                             child: SizedBox(
                               height: 280.0,
                               child: Stack(
@@ -98,6 +175,10 @@ class _HomeScreenState extends State<HomeScreen>{
                                     child: Container(
                                       decoration: BoxDecoration(
                                           color: Colors.white,
+                                          image: new DecorationImage(
+                                            image: AssetImage(images[index]),
+                                            fit: BoxFit.fitWidth,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
                                                 color: Colors.black12,
@@ -120,32 +201,41 @@ class _HomeScreenState extends State<HomeScreen>{
                                           crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                           children: <Widget>[
-                                            Text(option[index],
+                                            Text(data[index]["title"],
+                                                style: TextStyle(
+                                                    letterSpacing: 1.5,
+                                                    fontSize: 20.0,
+                                                    fontFamily: "Montserrat-Bold",
+                                                    color:Colors.white)),
+                                            SizedBox(
+                                              height: 40.0,
+                                            ),
+                                            Text("Pagamento: " + data[index]["payment"].toString() + "€",
                                                 style: TextStyle(
                                                     letterSpacing: 1.5,
                                                     fontSize: 16.0,
-                                                    fontFamily: "Montserrat-Bold",
-                                                    color:Color(0xFF2a2d3f))),
+                                                    fontFamily: "Montserrat-Medium",
+                                                    color: Colors.white)),
                                             SizedBox(
-                                              height: 24.0,
+                                              height: 20.0,
                                             ),
-                                            Text(description[index],
+                                            Text("Localização: " + data[index]["location"],
                                                 style: TextStyle(
                                                     letterSpacing: 1.5,
-                                                    fontSize: 12.0,
+                                                    fontSize: 16.0,
                                                     fontFamily: "Montserrat-Medium",
-                                                    color: Color(0xFF2a2d3f))),
+                                                    color: Colors.white)),
                                             SizedBox(
                                               height: 20.0,
                                             ),
                                             Container(
                                               alignment: Alignment.bottomCenter,
-                                              child: Text(location[index],
+                                              child: Text("Start: " + data[index]["start_date"] + "\nEnd: " + data[index]["end_date"],
                                                   style: TextStyle(
                                                       letterSpacing: 1.5,
-                                                      fontSize: 22.0,
+                                                      fontSize: 16.0,
                                                       fontFamily: "Montserrat-Bold",
-                                                      color: Color(0xFF2a2d3f))),
+                                                      color: Colors.white)),
                                             ),
                                           ],
                                         ),
@@ -165,7 +255,21 @@ class _HomeScreenState extends State<HomeScreen>{
             );
           },
         ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: addJob,
+        tooltip: 'New Job',
+        child: Icon(Icons.add),
+      ),
     );
+  }
+
+  void addJob() {
+    Navigator.of(context).push(MaterialPageRoute<Null>(
+        builder: (BuildContext context) {
+          return new AddJobScreen(
+            token: widget.token,
+          );
+        }));
   }
 
 
